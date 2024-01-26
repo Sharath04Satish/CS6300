@@ -75,11 +75,10 @@ def tinyMazeSearch(problem):
     return [s, s, w, s, w, w, s, w]
 
 
-def get_actions(node, parent):
-    action = node[1]
-    if action is None:
+def get_actions(current_node, trajectory):
+    if current_node[1] is None:
         return []
-    return get_actions(parent[node], parent) + [action]
+    return get_actions(trajectory[current_node], trajectory) + [current_node[1]]
 
 
 def depthFirstSearch(problem):
@@ -99,63 +98,89 @@ def depthFirstSearch(problem):
 
     fringe = util.Stack()
     expanded_nodes = set()
-    parent_nodes = dict()
+    trajectory = dict()
 
-    root_node = (problem.getStartState(), None, 0)
-    fringe.push(root_node)
+    fringe.push((problem.getStartState(), None, 0))
 
     while not fringe.isEmpty():
         current_node = fringe.pop()
+        current_state, _, _ = current_node
 
-        if problem.isGoalState(current_node[0]):
-            return get_actions(current_node, parent_nodes)
+        if problem.isGoalState(current_state):
+            return get_actions(current_node, trajectory)
 
         if current_node[0] not in expanded_nodes:
-            expanded_nodes.add(current_node[0])
+            expanded_nodes.add(current_state)
 
-            for successor in problem.getSuccessors(current_node[0]):
-                successor_state = successor[0]
+            for successor in problem.getSuccessors(current_state):
+                next_state = successor[0]
 
-                if successor_state not in expanded_nodes:
+                if next_state not in expanded_nodes:
+                    trajectory[successor] = current_node
                     fringe.push(successor)
-                    parent_nodes[successor] = current_node
 
     return []
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
+
     fringe = util.Queue()
     expanded_nodes = set()
-    parent_nodes = dict()
+    trajectory = dict()
 
-    root_node = (problem.getStartState(), None, 0)
-    fringe.push(root_node)
+    fringe.push((problem.getStartState(), None, 0))
 
     while not fringe.isEmpty():
         current_node = fringe.pop()
+        current_state, _, _ = current_node
 
-        if problem.isGoalState(current_node[0]):
-            return get_actions(current_node, parent_nodes)
+        if problem.isGoalState(current_state):
+            return get_actions(current_node, trajectory)
 
-        if current_node[0] not in expanded_nodes:
-            expanded_nodes.add(current_node[0])
+        if current_state not in expanded_nodes:
+            expanded_nodes.add(current_state)
 
-            for successor in problem.getSuccessors(current_node[0]):
-                successor_state = successor[0]
+            for successor in problem.getSuccessors(current_state):
+                next_state = successor[0]
 
-                if successor_state not in expanded_nodes:
+                if next_state not in expanded_nodes:
+                    trajectory[successor] = current_node
                     fringe.push(successor)
-                    parent_nodes[successor] = current_node
 
     return []
 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    fringe = util.PriorityQueue()
+    expanded_nodes = set()
+    trajectory = dict()
+    cost_by_nodes = {problem.getStartState(): 0}
+
+    fringe.push((problem.getStartState(), None, 0), 0)
+
+    while not fringe.isEmpty():
+        current_node = fringe.pop()
+        current_state = current_node[0]
+
+        if problem.isGoalState(current_state):
+            return get_actions(current_node, trajectory)
+
+        if current_state not in expanded_nodes:
+            expanded_nodes.add(current_state)
+
+            for successor_node in problem.getSuccessors(current_state):
+                successor_state, _, successor_cost = successor_node
+
+                if successor_state not in expanded_nodes:
+                    true_cost = cost_by_nodes[current_state] + successor_cost
+                    cost_by_nodes[successor_state] = true_cost
+                    trajectory[successor_node[:2]] = current_node
+                    fringe.update(successor_node[:2], true_cost)
+
+    return []
 
 
 def nullHeuristic(state, problem=None):
@@ -168,8 +193,35 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    fringe = util.PriorityQueue()
+    expanded_nodes = set()
+    trajectory = dict()
+    cost_by_nodes = {problem.getStartState(): 0}
+
+    fringe.push((problem.getStartState(), None, 0), 0)
+
+    while not fringe.isEmpty():
+        current_node = fringe.pop()
+        current_state = current_node[0]
+
+        if problem.isGoalState(current_state):
+            return get_actions(current_node, trajectory)
+
+        if current_state not in expanded_nodes:
+            expanded_nodes.add(current_state)
+
+            for successor_node in problem.getSuccessors(current_state):
+                successor_state, _, successor_cost = successor_node
+
+                if successor_state not in expanded_nodes:
+                    true_cost = cost_by_nodes[current_state] + successor_cost
+                    heuristic_cost = heuristic(successor_state, problem)
+                    cost_by_nodes[successor_state] = true_cost
+                    trajectory[successor_node[:2]] = current_node
+                    fringe.update(successor_node[:2], true_cost + heuristic_cost)
+
+    return []
 
 
 # Abbreviations

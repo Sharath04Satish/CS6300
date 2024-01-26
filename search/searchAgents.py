@@ -344,14 +344,21 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        state = {"position": self.startingPosition, "isCornerVisited": {}}
+        for corner in self.corners:
+            if state["position"] == corner:
+                state["isCornerVisited"][corner] = True
+            else:
+                state["isCornerVisited"][corner] = False
+        return self.tupleState(state)
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        state = self.dictState(state)
+        return all(corner for corner in state["isCornerVisited"].values())
 
     def getSuccessors(self, state):
         """
