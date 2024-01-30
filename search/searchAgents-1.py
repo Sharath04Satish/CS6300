@@ -337,7 +337,6 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-        self.visited_corners = set()
 
     def tupleState(self, state):
         """
@@ -368,13 +367,13 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        is_starting_state_a_corner = [False] * len(self.corners)
-
-        for index, corner in enumerate(self.corners):
-            if self.startingPosition == corner:
-                is_starting_state_a_corner[index] = True
-
-        return tuple(self.startingPosition, tuple(is_starting_state_a_corner))
+        state = {"position": self.startingPosition, "isCornerVisited": {}}
+        for corner in self.corners:
+            if state["position"] == corner:
+                state["isCornerVisited"][corner] = True
+            else:
+                state["isCornerVisited"][corner] = False
+        return self.tupleState(state)
 
     def isGoalState(self, state):
         """
@@ -383,9 +382,31 @@ class CornersProblem(search.SearchProblem):
         "*** YOUR CODE HERE ***"
         # Return True only if we have visited all the corners
         state = self.dictState(state)
-        if all(corner for corner in state["isCornerVisited"].values()):
-            print(state)
         return all(corner for corner in state["isCornerVisited"].values())
+
+    def generateSuccessor(self, state, action):
+        """
+        Given a state and an action, returns its successor state
+        Note that if the successor state is invalid, None is returned
+        """
+
+        x, y = state["position"]
+        dx, dy = Actions.directionToVector(action)
+        next_position = nextx, nexty = int(x + dx), int(y + dy)
+
+        # Do not generate a state if it is an invalid one
+        if self.walls[nextx][nexty]:
+            return None
+
+        nextState = {
+            "position": next_position,
+            "isCornerVisited": state["isCornerVisited"].copy(),
+        }
+
+        if next_position in self.corners:
+            nextState["isCornerVisited"][next_position] = True
+
+        return self.tupleState(nextState)
 
     def getSuccessors(self, state):
         """
@@ -403,8 +424,7 @@ class CornersProblem(search.SearchProblem):
         # In order to only generate valid successors, we must take the walls
         # into account and whether or not we are moving into a corner
 
-        # state = self.dictState(state)
-        print(state)
+        state = self.dictState(state)
         cost = 1
 
         successors = []
@@ -415,21 +435,24 @@ class CornersProblem(search.SearchProblem):
             Directions.WEST,
         ]:
             "*** YOUR CODE HERE ***"
-            x, y = state[0]
+            x, y = state["position"]
             dx, dy = Actions.directionToVector(action)
-            nextx, nexty = int(x + dx), int(y + dy)
+            next_position = nextx, nexty = int(x + dx), int(y + dy)
 
             # Do not generate a state if it is an invalid one
             if not self.walls[nextx][nexty]:
-                nextState = tuple([(nextx, nexty), tuple(list(state[1]))])
+                nextState = {
+                    "position": next_position,
+                    "isCornerVisited": state["isCornerVisited"].copy(),
+                }
 
-                if (nextx, nexty) in self.corners:
-                    self.visited_corners.add((nextx, nexty))
-                # if (nextx, nexty) in self.corners:
-                #     nextState["isCornerVisited"][next_position] = True
+                if next_position in self.corners:
+                    nextState["isCornerVisited"][next_position] = True
 
-                if nextState is not None:
-                    successors.append((nextState, action, cost))
+                successor = self.tupleState(nextState)
+
+                if successor is not None:
+                    successors.append((successor, action, cost))
 
         self._expanded += 1  # DO NOT CHANGE
         return successors
