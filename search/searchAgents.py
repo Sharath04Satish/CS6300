@@ -40,7 +40,8 @@ from game import Actions
 import util
 import time
 import search
-from math import sqrt, pow
+
+
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -78,10 +79,10 @@ class SearchAgent(Agent):
     """
 
     def __init__(
-        self,
-        fn="depthFirstSearch",
-        prob="PositionSearchProblem",
-        heuristic="nullHeuristic",
+            self,
+            fn="depthFirstSearch",
+            prob="PositionSearchProblem",
+            heuristic="nullHeuristic",
     ):
         # Warning: some advanced Python magic is employed below to find the right functions and problems
 
@@ -165,13 +166,13 @@ class PositionSearchProblem(search.SearchProblem):
     """
 
     def __init__(
-        self,
-        gameState,
-        costFn=lambda x: 1,
-        goal=(1, 1),
-        start=None,
-        warn=True,
-        visualize=True,
+            self,
+            gameState,
+            costFn=lambda x: 1,
+            goal=(1, 1),
+            start=None,
+            warn=True,
+            visualize=True,
     ):
         """
         Stores the start and goal.
@@ -361,7 +362,7 @@ class CornersProblem(search.SearchProblem):
         corner_values = list(state[1])
         if all(corner for corner in corner_values):
             return True
-        
+
     def getSuccessors(self, state):
         """
         Returns successor states, the actions they require, and a cost of 1.
@@ -389,10 +390,11 @@ class CornersProblem(search.SearchProblem):
 
                 if (nextx, nexty) in self.corners:
                     corner_index = self.corners.index((nextx, nexty))
-                    nextState = ((nextx, nexty), tuple(True if i == corner_index else val for i, val in enumerate(state[1])))
+                    nextState = (
+                    (nextx, nexty), tuple(True if i == corner_index else val for i, val in enumerate(state[1])))
 
                 successors.append((nextState, action, 1))
-        
+
         self._expanded += 1  # DO NOT CHANGE
         return successors
 
@@ -556,11 +558,6 @@ def furthestFootDotDistance(start, foodList, walls):
 
     return None
 
-def euclidean_distance(coord_x, coord_y):
-    x1, y1 = coord_x
-    x2, y2 = coord_y
-
-    return sqrt(pow((y2 - y1), 2) + pow((x2 - x1), 2))
 
 def foodHeuristic(state, problem):
     """
@@ -603,8 +600,7 @@ def foodHeuristic(state, problem):
         coord = foodList.pop(0)
         if not walls[position[0]][position[1]]:
             if not walls[coord[0]][coord[1]]:
-                distance = euclidean_distance(position, coord)
-    
+                distance = util.manhattanDistance(position, coord)
                 heuristics.append(distance)
     if len(heuristics) == 0:
         return 0
