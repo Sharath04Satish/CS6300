@@ -384,29 +384,6 @@ class CornersProblem(search.SearchProblem):
         state = self.dictState(state)
         return all(corner for corner in state["isCornerVisited"].values())
 
-    def generateSuccessor(self, state, action):
-        """
-        Given a state and an action, returns its successor state
-        Note that if the successor state is invalid, None is returned
-        """
-
-        x, y = state["position"]
-        dx, dy = Actions.directionToVector(action)
-        next_position = nextx, nexty = int(x + dx), int(y + dy)
-
-        # Do not generate a state if it is an invalid one
-        if self.walls[nextx][nexty]:
-            return None
-
-        nextState = {
-            "position": next_position,
-            "isCornerVisited": state["isCornerVisited"].copy(),
-        }
-
-        if next_position in self.corners:
-            nextState["isCornerVisited"][next_position] = True
-
-        return self.tupleState(nextState)
 
     def getSuccessors(self, state):
         """
@@ -418,11 +395,6 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-        # Update the state based on the action we are taking
-        # In order to generate the successors states, we must consider each
-        # of the four possible actions and return the corresponding states
-        # In order to only generate valid successors, we must take the walls
-        # into account and whether or not we are moving into a corner
 
         state = self.dictState(state)
         cost = 1
@@ -437,23 +409,22 @@ class CornersProblem(search.SearchProblem):
             "*** YOUR CODE HERE ***"
             x, y = state["position"]
             dx, dy = Actions.directionToVector(action)
-            next_position = nextx, nexty = int(x + dx), int(y + dy)
+            nextx, nexty = int(x + dx), int(y + dy)
 
-            # Do not generate a state if it is an invalid one
             if not self.walls[nextx][nexty]:
                 nextState = {
-                    "position": next_position,
+                    "position": (nextx, nexty),
                     "isCornerVisited": state["isCornerVisited"].copy(),
                 }
 
-                if next_position in self.corners:
-                    nextState["isCornerVisited"][next_position] = True
+                if (nextx, nexty) in self.corners:
+                    nextState["isCornerVisited"][(nextx, nexty)] = True
 
                 successor = self.tupleState(nextState)
 
                 if successor is not None:
                     successors.append((successor, action, cost))
-
+                    print(successors[-1])
         self._expanded += 1  # DO NOT CHANGE
         return successors
 

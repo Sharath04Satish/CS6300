@@ -337,30 +337,6 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-        self.visited_corners = set()
-
-    def tupleState(self, state):
-        """
-        Input: A state represented with a dictionary
-        Output: The same state represented with a tuple
-        """
-        l = []
-        # We must ensure that the order of the corners is always the same,
-        # so we use self.corners which is an immutable structure
-        for corner in self.corners:
-            l.append(state["isCornerVisited"][corner])
-        return state["position"], tuple(l)
-
-    def dictState(self, state):
-        """
-        Input: A state represented with a tuple
-        Output: The same state represented with a dictionary
-        """
-        isCornerVisited = {}
-        # By doing that we ensure that the order of corners remains the same
-        for i in range(4):
-            isCornerVisited[self.corners[i]] = state[1][i]
-        return {"position": state[0], "isCornerVisited": isCornerVisited}
 
     def getStartState(self):
         """
@@ -374,7 +350,7 @@ class CornersProblem(search.SearchProblem):
             if self.startingPosition == corner:
                 is_starting_state_a_corner[index] = True
 
-        return tuple(self.startingPosition, tuple(is_starting_state_a_corner))
+        return tuple((self.startingPosition, tuple(is_starting_state_a_corner)))
 
     def isGoalState(self, state):
         """
@@ -382,11 +358,10 @@ class CornersProblem(search.SearchProblem):
         """
         "*** YOUR CODE HERE ***"
         # Return True only if we have visited all the corners
-        state = self.dictState(state)
-        if all(corner for corner in state["isCornerVisited"].values()):
-            print(state)
-        return all(corner for corner in state["isCornerVisited"].values())
-
+        corner_values = list(state[1])
+        if all(corner for corner in corner_values):
+            return True
+        
     def getSuccessors(self, state):
         """
         Returns successor states, the actions they require, and a cost of 1.
@@ -397,16 +372,6 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-        # Update the state based on the action we are taking
-        # In order to generate the successors states, we must consider each
-        # of the four possible actions and return the corresponding states
-        # In order to only generate valid successors, we must take the walls
-        # into account and whether or not we are moving into a corner
-
-        # state = self.dictState(state)
-        print(state)
-        cost = 1
-
         successors = []
         for action in [
             Directions.NORTH,
@@ -419,18 +384,15 @@ class CornersProblem(search.SearchProblem):
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
 
-            # Do not generate a state if it is an invalid one
             if not self.walls[nextx][nexty]:
                 nextState = tuple([(nextx, nexty), tuple(list(state[1]))])
 
                 if (nextx, nexty) in self.corners:
-                    self.visited_corners.add((nextx, nexty))
-                # if (nextx, nexty) in self.corners:
-                #     nextState["isCornerVisited"][next_position] = True
+                    corner_index = self.corners.index((nextx, nexty))
+                    nextState = ((nextx, nexty), tuple(True if i == corner_index else val for i, val in enumerate(state[1])))
 
-                if nextState is not None:
-                    successors.append((nextState, action, cost))
-
+                successors.append((nextState, action, 1))
+        
         self._expanded += 1  # DO NOT CHANGE
         return successors
 
@@ -467,16 +429,18 @@ def cornersHeuristic(state, problem):
     walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    state = problem.dictState(state)
-    position = state["position"]
-    distances = []
+    heuristics = []
 
-    for corner, visited in state["isCornerVisited"].items():
-        if not visited:
-            h = abs(position[0] - corner[0]) + abs(position[1] - corner[1])
-            distances.append(h)
+    for index, is_corner_visited in enumerate(list(state[1])):
+        if not is_corner_visited:
+            corner_x, corner_y = corners[index]
+            state_x, state_y = state[0]
+            heuristics.append(abs(state_x - corner_x) + abs(state_y - corner_y))
 
-    return 0 if not distances else max(distances)
+    if len(heuristics) != 0:
+        return max(heuristics)
+    else:
+        return 0
 
 
 class AStarCornersAgent(SearchAgent):
