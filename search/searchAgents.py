@@ -435,9 +435,7 @@ def cornersHeuristic(state, problem):
 
     for index, is_corner_visited in enumerate(list(state[1])):
         if not is_corner_visited:
-            corner_x, corner_y = corners[index]
-            state_x, state_y = state[0]
-            heuristics.append(abs(state_x - corner_x) + abs(state_y - corner_y))
+            heuristics.append(util.manhattanDistance(corners[index], state[0]))
 
     if len(heuristics) != 0:
         return max(heuristics)
@@ -519,44 +517,6 @@ class AStarFoodSearchAgent(SearchAgent):
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
-
-
-def furthestFootDotDistance(start, foodList, walls):
-    # Dictionary storing the maze distance from start to any given position
-    # distance[u] = n means that position u is n steps away from start
-    distance = {start: 0}
-
-    # Set of visited positions in order to avoid revisiting them again
-    visited = {start}
-
-    queue = util.Queue()
-    queue.push(start)
-
-    while not queue.isEmpty():
-        position = x, y = queue.pop()
-
-        if position in foodList:
-            # This is the last foot dot, hence the furthest one
-            if len(foodList) == 1:
-                return distance[position]
-            # There are still remaining foot dots in the list, keep exploring
-            foodList.remove(position)
-
-        for action in [
-            Directions.NORTH,
-            Directions.SOUTH,
-            Directions.EAST,
-            Directions.WEST,
-        ]:
-            dx, dy = Actions.directionToVector(action)
-            next_position = nextx, nexty = int(x + dx), int(y + dy)
-            if not walls[nextx][nexty] and next_position not in visited:
-                queue.push(next_position)
-                visited.add(next_position)
-                # A single action separates position from next_position, so the distance is 1
-                distance[next_position] = distance[position] + 1
-
-    return None
 
 
 def foodHeuristic(state, problem):
