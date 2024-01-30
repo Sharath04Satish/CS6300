@@ -40,7 +40,7 @@ from game import Actions
 import util
 import time
 import search
-
+from math import sqrt, pow
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -556,6 +556,11 @@ def furthestFootDotDistance(start, foodList, walls):
 
     return None
 
+def euclidean_distance(coord_x, coord_y):
+    x1, y1 = coord_x
+    x2, y2 = coord_y
+
+    return sqrt(pow((y2 - y1), 2) + pow((x2 - x1), 2))
 
 def foodHeuristic(state, problem):
     """
@@ -589,19 +594,22 @@ def foodHeuristic(state, problem):
     "*** YOUR CODE HERE ***"
     foodList = foodGrid.asList()
     walls = problem.walls
+    heuristics = list()
 
-    # There is no food left: goal state is reached
     if not foodList:
         return 0
 
-    # To find the maze distance from position to the furthest food dot,
-    # we perform a BFS starting from position and stopping when the
-    # last food dot (thus the furthest) is found
-    # Note that there is already a maze_distance function implemented, but
-    # it would run a BFS for every single food position and with this
-    # implementation a single BFS is run. Moreover, it needs a full
-    # gameState as argument and this function has no access to it
-    return furthestFootDotDistance(start=position, foodList=foodList, walls=walls)
+    while len(foodList) > 0:
+        coord = foodList.pop(0)
+        if not walls[position[0]][position[1]]:
+            if not walls[coord[0]][coord[1]]:
+                distance = euclidean_distance(position, coord)
+    
+                heuristics.append(distance)
+    if len(heuristics) == 0:
+        return 0
+    else:
+        return max(heuristics)
 
 
 class ClosestDotSearchAgent(SearchAgent):
