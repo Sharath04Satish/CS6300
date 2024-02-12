@@ -217,18 +217,19 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     def alphabetaSearch(self, gameState, agentIndex, depth, alpha, beta):
         if gameState.isWin() or gameState.isLose() or depth == 0:
             return (self.evaluationFunction(gameState), Directions.STOP)
-        elif agentIndex == 0:
-            return self.alphasearch(gameState, agentIndex, depth, alpha, beta)
         else:
-            return self.betasearch(gameState, agentIndex, depth, alpha, beta)
+            if agentIndex == gameState.getNumAgents() - 1:
+                agentIndex, depth = 0, depth - 1
+                return self.alphasearch(gameState, agentIndex, depth, alpha, beta)
+            else:
+                agentIndex, depth = agentIndex + 1, depth
+                return self.betasearch(gameState, agentIndex, depth, alpha, beta)
+
 
     def alphasearch(self, gameState, agentIndex, depth, alpha, beta):
-        actions = gameState.getLegalActions(agentIndex)
-        if agentIndex == gameState.getNumAgents() - 1:
-            next_agent, next_depth = 0, depth - 1
-        else:
-            next_agent, next_depth = agentIndex + 1, depth
         max_score, max_action = float("-inf"), Directions.STOP
+
+        actions = gameState.getLegalActions(agentIndex)
         for action in actions:
             successor_game_state = gameState.generateSuccessor(agentIndex, action)
             new_score = self.alphabetaSearch(
@@ -242,12 +243,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         return max_score, max_action
 
     def betasearch(self, gameState, agentIndex, depth, alpha, beta):
-        actions = gameState.getLegalActions(agentIndex)
-        if agentIndex == gameState.getNumAgents() - 1:
-            next_agent, next_depth = 0, depth - 1
-        else:
-            next_agent, next_depth = agentIndex + 1, depth
         min_score, min_action = float("inf"), Directions.STOP
+
+        actions = gameState.getLegalActions(agentIndex)
         for action in actions:
             successor_game_state = gameState.generateSuccessor(agentIndex, action)
             new_score = self.alphabetaSearch(
