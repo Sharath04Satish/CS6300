@@ -201,54 +201,57 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
-        full_states = self.mdp.getStates()
+        predecessor_states = self.mdp.getStates()
+        pr_queue = util.PriorityQueue()
+
         adjacent_matrix = []
-        state_to_index = util.Counter()
-        cnt = 0
-        for s_i in full_states:
+        state_indices = util.Counter()
+
+        for index, state_x in enumerate(predecessor_states):
             adjacent_list = set()
-            for s_j in full_states:
-                actions = self.mdp.getPossibleActions(s_j)
-                for action in actions:
-                    state_prob = self.mdp.getTransitionStatesAndProbs(s_j, action)
-                    for new_state, prob in state_prob:
-                        if new_state == s_i and prob > 0:
-                            adjacent_list.add(s_j)
+
+            for state_y in predecessor_states:
+                legal_actions = self.mdp.getPossibleActions(state_y)
+                for action in legal_actions:
+                    next_states = self.mdp.getTransitionStatesAndProbs(state_y, action)
+
+                    for next_state, transition_prob in next_states:
+                        if next_state == state_x and transition_prob > 0.0:
+                            adjacent_list.add(state_y)
+
             adjacent_matrix.append(adjacent_list)
-            state_to_index[s_i] = cnt
-            cnt += 1
-        # initialize a priority queue
-        p_queue = util.PriorityQueue()
-        new_values = util.Counter()
-        # find diff of each s, store new value in new_values, push s, -diff
-        for state in full_states:
-            actions = self.mdp.getPossibleActions(state)
+            state_indices[state_x] = index
+
+        q_values = util.Counter()
+        for state in predecessor_states:
             if self.mdp.isTerminal(state):
                 continue
-            current_value = self.getValue(state)
-            best_action = self.computeActionFromValues(state)
-            if best_action:
-                new_value = self.computeQValueFromValues(state, best_action)
-                new_values[state] = new_value
-                diff = abs(current_value - new_value)
-                p_queue.push(state, -diff)
+
+            if self.computeActionFromValues(state):
+                updated_q_value = self.computeQValueFromValues(
+                    state, self.computeActionFromValues(state)
+                )
+                q_values[state] = updated_q_value
+                diff = abs(self.getValue(state) - updated_q_value)
+                pr_queue.push(state, -diff)
             else:
-                new_values[state] = current_value
-        # do iterations
+                q_values[state] = self.getValue(state)
+
         for _ in range(self.iterations):
-            # if p_queue is empty, terminate
-            if p_queue.isEmpty():
+            if pr_queue.isEmpty():
                 break
-            front = p_queue.pop()
-            if not self.mdp.isTerminal(front):
-                self.values[front] = new_values[front]
-            # precess front's pred
-            for pred in adjacent_matrix[state_to_index[front]]:
-                current_value = self.getValue(pred)
-                best_action = self.computeActionFromValues(pred)
-                if best_action:
-                    new_value = self.computeQValueFromValues(pred, best_action)
-                    diff = abs(current_value - new_value)
-                    new_values[pred] = new_value
+
+            next_state = pr_queue.pop()
+            if not self.mdp.isTerminal(next_state):
+                self.values[next_state] = q_values[next_state]
+
+            for predecessor in adjacent_matrix[state_indices[next_state]]:
+                if self.computeActionFromValues(predecessor):
+                    updated_q_value = self.computeQValueFromValues(
+                        predecessor, self.computeActionFromValues(predecessor)
+                    )
+                    diff = abs(self.getValue(predecessor) - updated_q_value)
+                    q_values[predecessor] = updated_q_value
+
                     if diff > self.theta:
-                        p_queue.update(pred, -diff)
+                        pr_queue.update(predecessor, -diff)
